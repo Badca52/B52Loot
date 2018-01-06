@@ -1,0 +1,10 @@
+name        = "B52 Loot";
+author      = "Badca52";
+picture     = "52.paa";
+logo        = "52.paa";
+logoOver    = "52.paa";
+actionName  = "Website";
+action      = "http://www.github.com/Badca52";
+tooltip     = "B52 Loot";
+overview    = "B52 Loot";
+description = "B52 Loot";
