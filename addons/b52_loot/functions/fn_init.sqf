@@ -1,5 +1,6 @@
 #define DEF_LOOT_PROBABILITY 15
 #define DEF_SHOW_LOOT false
+#define DEF_BATCH_SIZE 10
 
 if (!isServer) exitWith {};
 
@@ -26,6 +27,11 @@ private _center  = [_mapSize / 2, _mapSize / 2];
 private _radius  = _mapSize * 0.7;
 
 private _houseList = _center nearObjects ["House", _radius];
+private _totalBuildings = count _houseList;
+
+diag_log format ["[B52 Loot] Starting loot spawn: %1 buildings found on map (worldSize=%2)", _totalBuildings, _mapSize];
+
+private _buildingsProcessed = 0;
 
 {
     private _house = _x;
@@ -60,8 +66,18 @@ private _houseList = _center nearObjects ["House", _radius];
         };
     };
 
-    // Yield every 25 buildings to prevent frame freeze
-    if (_forEachIndex % 25 == 0 && _forEachIndex > 0) then {
-        sleep 0.01;
+    _buildingsProcessed = _buildingsProcessed + 1;
+
+    // Yield every batch to prevent "too many virtual blocks" crash
+    // Smaller batch size = more yields = safer on large maps like Altis (30k+ buildings)
+    if (_buildingsProcessed % DEF_BATCH_SIZE == 0) then {
+        sleep 0.05;
+    };
+
+    // Progress logging every 1000 buildings
+    if (_buildingsProcessed % 1000 == 0) then {
+        diag_log format ["[B52 Loot] Progress: %1/%2 buildings processed (%3%%)", _buildingsProcessed, _totalBuildings, round (_buildingsProcessed / _totalBuildings * 100)];
     };
 } forEach _houseList;
+
+diag_log format ["[B52 Loot] Complete: %1 buildings processed", _totalBuildings];

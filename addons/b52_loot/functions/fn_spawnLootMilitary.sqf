@@ -5,6 +5,9 @@ params ["_pos", "_showLoot"];
 private _holder = createVehicle ["GroundWeaponHolder", [_pos select 0, _pos select 1, (_pos select 2) + 0.2], [], 0, "CAN_COLLIDE"];
 [_holder, _pos] call B52_Loot_Module_fnc_lootPosInHouse;
 
+// Protect from Ravage garbage collection
+_holder setVariable ["rvg_intLoot", true];
+
 private _type = selectRandom ["weapon", "magazine", "vest"];
 
 switch (_type) do {

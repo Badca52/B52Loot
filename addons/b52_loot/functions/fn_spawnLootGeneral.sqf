@@ -5,6 +5,9 @@ params ["_pos", "_showLoot"];
 private _holder = createVehicle ["GroundWeaponHolder", [_pos select 0, _pos select 1, (_pos select 2) + 0.2], [], 0, "CAN_COLLIDE"];
 [_holder, _pos] call B52_Loot_Module_fnc_lootPosInHouse;
 
+// Protect from Ravage garbage collection
+_holder setVariable ["rvg_intLoot", true];
+
 // Uniform random loot type selection
 private _lootTypes = ["vest", "item", "clothing", "backpack", "magazine", "weapon", "crate"];
 private _type = selectRandom _lootTypes;
@@ -86,6 +89,9 @@ switch (_type) do {
         private _localPos = getPosATL _holder;
         deleteVehicle _holder;
         _holder = createVehicle ["Box_IND_Ammo_F", _localPos, [], 0, "CAN_COLLIDE"];
+
+        // Protect crate from Ravage garbage collection
+        _holder setVariable ["rvg_intLoot", true];
 
         clearItemCargoGlobal _holder;
         clearWeaponCargoGlobal _holder;
