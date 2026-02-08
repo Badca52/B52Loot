@@ -20,3 +20,11 @@ keys/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# HEMTT build artifacts
+.hemttout/
+.hemttprivatekey
+releases/
+
+# Workshop upload staging
+.workshop_upload/

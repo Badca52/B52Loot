@@ -1,0 +1,11 @@
+name = "B52Loot"
+prefix = "b52"
+author = "Badca52"
+
+[version]
+major = 0
+minor = 30
+patch = 0
+
+[signing]
+authority = "b52_loot"
