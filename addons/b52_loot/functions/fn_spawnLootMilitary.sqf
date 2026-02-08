@@ -1,78 +1,51 @@
-private ["_type"];
-if (isServer) 
-    then {
-        _pos      = (_this select 0);
-        _showLoot = (_this select 1);
-        
-        _holder = createVehicle ["GroundWeaponHolder", [_pos select 0, _pos select 1, (_pos select 2) + 0.2], [], 0, "can_Collide"];
-        [_holder, _pos] call B52_Loot_Module_fnc_lootPosInHouse;
-        
-        _type = floor (random 3);
-        
-        if (_showLoot)
-        then {
-            _id    = format ["%1", _pos];
-            _debug = createMarker [_id, GETPOS _holder];
-            _debug setMarkerShape "ICON";
-            _debug setMarkerType "hd_dot";
-            _debug setMarkerColor "ColorRed";
-            _txt = format ["%1", _type];
-            
-            // Spawn Weapon
-            if (_type == 0)
-            then {
-                _debug setMarkerText "Weapon";
-            };
-            
-            // Spawn Magazines
-            if (_type == 1)
-            then {
-                _debug setMarkerText "Magazine";
-            };
-            
-            // Spawn Vests
-            if (_type == 2)
-            then {
-                _debug setMarkerText "Vest";
-            };
-        };
-        
-        // Spawn Weapon
-        if (_type == 0)
-        then {
-            _weapon = B52_AssaultRifles call bis_fnc_selectRandom;
+if (!isServer) exitWith {};
 
-            _magazines     = getArray (configFile / "CfgWeapons" / _weapon / "magazines");
-            _magazineClass = _magazines call bis_fnc_selectRandom;
-            
-            _holder addWeaponCargoGlobal [_weapon, 1];
-            _magCount = count _magazines;
-            for "_i" from 1 to _magCount do 
-            {
-                _magazineClass = _magazines call bis_fnc_selectRandom;
-                
-                if (getnumber (configFile >> "CfgWeapons" >> _weapon >> "magazines" >> _magazineClass >> "scope") == 2) 
-                exitWith {
-                    _holder addMagazineCargoGlobal [_magazineClass, 2];
-                };
-            };
-        };
-        
-        // Spawn Magazines
-        if (_type == 1)
-        then {
-            _weapon        = B52_AssaultRifles call bis_fnc_selectRandom;
-            _magazines     = getArray (configFile / "CfgWeapons" / _weapon / "magazines");
-            _magazineClass = _magazines call bis_fnc_selectRandom;
+params ["_pos", "_showLoot"];
 
+private _holder = createVehicle ["GroundWeaponHolder", [_pos select 0, _pos select 1, (_pos select 2) + 0.2], [], 0, "CAN_COLLIDE"];
+[_holder, _pos] call B52_Loot_Module_fnc_lootPosInHouse;
+
+private _type = selectRandom ["weapon", "magazine", "vest"];
+
+switch (_type) do {
+    case "weapon": {
+        // Military buildings get broader weapon variety
+        private _weaponType = selectRandom ["AssaultRifle", "AssaultRifle", "MachineGun", "SniperRifle", "Rifle"];
+        private _weapon = [_weaponType] call B52_Loot_Module_fnc_selectWeapon;
+
+        _holder addWeaponCargoGlobal [_weapon, 1];
+
+        private _magazines = getArray (configFile >> "CfgWeapons" >> _weapon >> "magazines");
+        if (count _magazines > 0) then {
+            private _magazineClass = _magazines select 0;
             _holder addMagazineCargoGlobal [_magazineClass, 2];
         };
-        
-        // Spawn Vests
-        if (_type == 2)
-        then {
-            _vest = B52_Vests call bis_fnc_selectRandom;
-            _holder addItemCargoGlobal [_vest, 1];
+    };
+
+    case "magazine": {
+        // Pick magazines compatible with a random military weapon type
+        private _weaponType = selectRandom ["AssaultRifle", "MachineGun", "SniperRifle"];
+        private _weapon = [_weaponType] call B52_Loot_Module_fnc_selectWeapon;
+
+        private _magazines = getArray (configFile >> "CfgWeapons" >> _weapon >> "magazines");
+        if (count _magazines > 0) then {
+            private _magazineClass = _magazines select 0;
+            _holder addMagazineCargoGlobal [_magazineClass, 2];
         };
-        
-    };  // IsServer
+    };
+
+    case "vest": {
+        private _vest = selectRandom B52_Vests;
+        _holder addItemCargoGlobal [_vest, 1];
+    };
+};
+
+// Debug marker
+if (_showLoot) then {
+    private _id = format ["%1", _pos];
+    private _debug = createMarker [_id, getPos _holder];
+    _debug setMarkerShape "ICON";
+    _debug setMarkerType "hd_dot";
+    _debug setMarkerColor "ColorRed";
+    _debug setMarkerText _type;
+};

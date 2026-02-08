@@ -1,5 +1,7 @@
-#define def_LOOT_PROBABILITY 15
-#define def_SHOW_LOOT false
+#define DEF_LOOT_PROBABILITY 15
+#define DEF_SHOW_LOOT false
+
+if (!isServer) exitWith {};
 
 params [
     ["_logic", objNull],
@@ -7,54 +9,59 @@ params [
     ["_activated", true]
 ];
 
-_probability = _logic getVariable ["lootProbability", def_LOOT_PROBABILITY];
-_showLoot    = _logic getVariable ["showMarkers", def_SHOW_LOOT];
+if (!_activated) exitWith {};
 
-// Exclude buildings from loot spawn. Use 'TYPEOF' to find building name
-_exclusionList= ["Land_Pier_F","Land_Pier_small_F","Land_NavigLight","Land_LampHarbour_F"];
+// Load default loot tables (respects any mission-level overrides)
+call B52_Loot_Module_fnc_defineLootTables;
 
-private ["_distance","_houseList"];
-_mkr = createMarker ["loot_spawn",[7800,8500]];
-_mkr setMarkerShape "ICON";
-_mkr setMarkerType "EMPTY";
-_mkr setMarkerSize [35000, 35000];
-_pos = markerpos _mkr;
-_mkrY = getmarkerSize _mkr select 0;
-_mkrX = getmarkerSize _mkr select 1;
+private _probability = _logic getVariable ["lootProbability", DEF_LOOT_PROBABILITY];
+private _showLoot    = _logic getVariable ["showMarkers", DEF_SHOW_LOOT];
 
-_distance = _mkrX;
-if (_mkrY > _mkrX) 
-then {
-    _distance = _mkrY;
-};
+// Buildings to exclude from loot spawning
+private _exclusionList = ["Land_Pier_F", "Land_Pier_small_F", "Land_NavigLight", "Land_LampHarbour_F"];
 
-_houseList = _pos nearObjects ["House", _distance];
+// Map-agnostic center and search radius
+private _mapSize = worldSize;
+private _center  = [_mapSize / 2, _mapSize / 2];
+private _radius  = _mapSize * 0.7;
+
+private _houseList = _center nearObjects ["House", _radius];
 
 {
-    _house = _X;
-    
-    if (!(typeOf _house in _exclusionList)) 
-    then {
-        _buildingType     = typeOf _house;
-        _vehicleClassName = getText(configfile >> "CfgVehicles" >> _buildingType >> "vehicleClass");
-        
+    private _house = _x;
+
+    if !(typeOf _house in _exclusionList) then {
+        private _buildingType = typeOf _house;
+
+        // Classify building by classname keywords
+        private _isMilitary = false;
+        {
+            if (_buildingType find _x >= 0) exitWith { _isMilitary = true; };
+        } forEach B52_MilitaryKeywords;
+
+        if (!_isMilitary) then {
+            {
+                if (_buildingType find _x >= 0) exitWith { _isMilitary = true; };
+            } forEach B52_IndustrialKeywords;
+        };
+
+        // Iterate building positions (max 50 per building)
         for "_n" from 0 to 50 do {
-            _buildingPos = _house buildingpos _n;
-            if (str _buildingPos == "[0,0,0]")
-            exitwith {};
-            
-            if (_probability > random 100) 
-            then {
-                // Spawn Residential Loot
-                if (_vehicleClassName in B52_BuildingIndustrial || _vehicleClassName in B52_BuildingMilitary)
-                then 
-                {
-                    null = [_buildingPos, _showLoot] execVM "\b52_loot\functions\fn_spawnLootMilitary.sqf";
-                }
-                else {
-                    null = [_buildingPos, _showLoot] execVM "\b52_loot\functions\fn_spawnLootGeneral.sqf";
+            private _buildingPos = _house buildingPos _n;
+            if (_buildingPos isEqualTo [0,0,0]) exitWith {};
+
+            if (_probability > random 100) then {
+                if (_isMilitary) then {
+                    [_buildingPos, _showLoot] call B52_Loot_Module_fnc_spawnLootMilitary;
+                } else {
+                    [_buildingPos, _showLoot] call B52_Loot_Module_fnc_spawnLootGeneral;
                 };
             };
         };
-    };              
-}foreach _houseList;
+    };
+
+    // Yield every 25 buildings to prevent frame freeze
+    if (_forEachIndex % 25 == 0 && _forEachIndex > 0) then {
+        sleep 0.01;
+    };
+} forEach _houseList;

@@ -6,8 +6,8 @@ class CfgPatches
         author    = "Badca52";
         authorUrl = "https://github.com/Badca52";
 
-        version         = "0.22";
-        requiredVersion = 0.22;
+        version         = "0.30";
+        requiredVersion = 1.60;
         requiredAddons[] = {"cba_main"};
     };
 };
