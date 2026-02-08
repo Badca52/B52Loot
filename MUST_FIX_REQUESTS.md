@@ -1,7 +1,7 @@
 # B52 Loot - Must Fix
 
-Issues that must be resolved before republishing to Steam Workshop.
-Each item is verified against the current codebase (v0.30).
+Issues that were resolved before republishing to Steam Workshop.
+All 8 items have been fixed and the mod has been republished (v0.30).
 
 ---
 
@@ -21,47 +21,31 @@ No entry 'bin/config.bin/CfgPatches/B52_Loot.units'
 
 ---
 
-## 2. Missing server key (bikey) for dedicated servers - MANUAL ACTION REQUIRED
+## 2. Missing server key (bikey) for dedicated servers - FIXED
 
 Users cannot run this mod on dedicated servers because there is no bikey file included. Arma 3 dedicated servers require signature verification and reject unsigned addons by default.
 
 **Reported by:** Zeus, JarasonPC
 
-**Current state:** No `keys/` directory or `.bikey` file exists anywhere in the repository.
-
-**Action required:** Generate a keypair using Arma 3 Tools (Windows):
-1. Open **DSCreateKey** from Arma 3 Tools
-2. Create a keypair (e.g., `b52_loot`)
-3. Use **DSSignFile** to sign the built PBO with the private key
-4. Place the `.bikey` (public key) in a `keys/` directory at the repo root
-5. Keep the `.biprivatekey` secure and never commit it
+**Fix applied:** Generated keypair and signed PBO using HEMTT build tool. The `.bikey` (public key) is included in the Workshop release under `keys/`. The `.bisign` signature file is alongside the PBO in `addons/`. Server admins copy the `.bikey` to their server's `Keys/` directory.
 
 ---
 
-## 3. Stale PBO in repository - MANUAL ACTION REQUIRED
+## 3. Stale PBO in repository - FIXED
 
-`addons/b52_loot.pbo` is from the original 2017 build and does not reflect any v0.30 changes. Users cloning or downloading the repo will get the broken old version.
+`addons/b52_loot.pbo` was from the original 2017 build and did not reflect any v0.30 changes.
 
-**Current state:** The PBO is stale. All source files under `addons/b52_loot/` have been updated but the PBO has not been rebuilt. The `.gitignore` now excludes `*.pbo` from future commits.
-
-**Action required:** Rebuild the PBO using Arma 3 Tools (Windows):
-1. Open **Addon Builder** from Arma 3 Tools
-2. Set source directory to `addons/b52_loot`
-3. Build the PBO to `addons/b52_loot.pbo`
-4. Remove the stale PBO from git history: `git rm --cached addons/b52_loot.pbo`
+**Fix applied:** Removed the stale PBO from git tracking (`git rm --cached`). Set up HEMTT (cross-platform Arma 3 build tool) for Linux-native PBO building. The PBO is now built fresh from source with `hemtt release`, which rapifies the config, compiles SQF to bytecode, and signs the output. The `.gitignore` excludes `*.pbo` and build artifacts from future commits.
 
 ---
 
-## 4. Workshop listing removed/flagged - MANUAL ACTION REQUIRED
+## 4. Workshop listing removed/flagged - FIXED
 
-The Steam Workshop page shows a removal notice stating the mod violates Steam Community & Content Guidelines and is flagged as incompatible with Arma 3.
+The Steam Workshop page showed a removal notice stating the mod violates Steam Community & Content Guidelines and was flagged as incompatible with Arma 3.
 
 **Reported by:** Multiple users noted the listing issues; =[US]=Grant (Jan 2024) declared the mod abandoned.
 
-**Action required:** After all code fixes are applied and the PBO is rebuilt:
-1. Investigate why the listing was removed (likely inactivity + reports from broken state)
-2. Republish or appeal with the updated mod
-3. Update the Workshop description with the new README content
+**Fix applied:** Republished the mod to Steam Workshop (ID 898629562) via steamcmd with the fully rebuilt v0.30 release including all bug fixes, signed PBO, server key, and updated metadata.
 
 ---
 
